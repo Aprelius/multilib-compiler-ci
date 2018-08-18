@@ -5,7 +5,7 @@ ENV GCC_MIRROR https://ftpmirror.gnu.org/gcc
 
 RUN set -ex; \
   yum update -y; \
-  yum install -y bzip2 make gcc gcc-c++ gcc-multilib libstdc++ libstdc++-devel \
+  yum install -y python bzip2 make gcc gcc-c++ gcc-multilib libstdc++ libstdc++-devel \
     libstdc++.i686 libstdc++-devel.i686 glibc glibc-devel glic.i686 glibc-devel.i686; \
   yum clean all; \
   \
