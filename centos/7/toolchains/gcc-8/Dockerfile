@@ -39,7 +39,8 @@ ENV GCC_MIRROR https://ftpmirror.gnu.org/gcc
 RUN set -ex; \
   yum update -y; \
   yum install -y python bzip2 make gcc gcc-c++ gcc-multilib libstdc++ libstdc++-devel \
-    libstdc++.i686 libstdc++-devel.i686 glibc glibc-devel glic.i686 glibc-devel.i686; \
+    libstdc++.i686 libstdc++-devel.i686 glibc glibc-devel glic.i686 glibc-devel.i686 \
+    wget curl; \
   yum clean all; \
   \
   _fetch() { \
@@ -102,7 +103,9 @@ COPY --from=gcc-build /usr/local/share/gcc-${GCC_VERSION} /usr/local/share
 
 RUN set -ex; \
     yum update -y; \
-    yum install -y python make glibc-devel glibc-devel.i686; \
+    yum install -y python make glibc-devel glibc-devel.i686 \
+        perl curl-devel curl-devel.i686; \
+    yum clean all; \
     \
     echo '/usr/local/lib64' > /etc/ld.so.conf.d/local-lib64.conf; \
     echo '/usr/local/lib' > /etc/ld.so.conf.d/local-lib.conf; \
