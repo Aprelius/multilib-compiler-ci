@@ -90,13 +90,20 @@ FROM centos:centos8
 ENV GCC_MAJOR_VERSION 9
 ENV GCC_VERSION 9.3.0
 
-COPY --from=cmake-build /usr/local/bin/cmake /usr/local/bin/cmake
-COPY --from=cmake-build /usr/local/bin/cpack /usr/local/bin/cpack
-COPY --from=cmake-build /usr/local/bin/ctest /usr/local/bin/ctest
-COPY --from=cmake-build /usr/local/share/cmake-3.17 /usr/local/share/cmake-3.17
+COPY --from=cmake-build [ \
+  "/usr/local/bin/cmake", \
+  "/usr/local/bin/cpack", \
+  "/usr/local/bin/ctest", \
+  "/usr/local/bin/"]
+COPY --from=cmake-build [ \
+  "/usr/local/share/cmake-3.17", \
+  "/usr/local/share/cmake-3.17/"]
 
-COPY --from=gcc-build /usr/local/bin/gcc /usr/local/bin/gcc
-COPY --from=gcc-build /usr/local/bin/g++ /usr/local/bin/g++
+COPY --from=gcc-build [ \
+  "/usr/local/bin/gcc", \
+  "/usr/local/bin/g++", \
+  "/usr/local/bin/"]
+
 COPY --from=gcc-build /usr/local/lib /usr/local/lib
 COPY --from=gcc-build /usr/local/lib64 /usr/local/lib64
 COPY --from=gcc-build /usr/local/include /usr/local/include
@@ -106,7 +113,7 @@ COPY --from=gcc-build /usr/local/share/gcc-${GCC_VERSION} /usr/local/share
 RUN set -ex; \
     dnf update -y; \
     dnf install -y make glibc-devel glibc-devel.i686 \
-        perl curl-devel; \
+        perl curl-devel python3 git; \
     dnf clean all; \
     rm -rf /var/cache/dnf; \
     \
@@ -115,4 +122,5 @@ RUN set -ex; \
     ldconfig -v; \
     \
     ln -s /usr/local/bin/gcc "/usr/bin/gcc${GCC_MAJOR_VERSION}"; \
-    ln -s /usr/local/bin/g++ "/usr/bin/g++${GCC_MAJOR_VERSION}";
+    ln -s /usr/local/bin/g++ "/usr/bin/g++${GCC_MAJOR_VERSION}"; \
+    ln -s /usr/bin/python3 /usr/local/bin/python;
