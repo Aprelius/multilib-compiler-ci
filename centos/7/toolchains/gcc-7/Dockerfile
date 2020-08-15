@@ -1,12 +1,13 @@
 FROM centos:centos7 AS cmake-build
 
-ENV CMAKE_VERSION 3.13.2
+ENV CMAKE_VERSION 3.17.2
 ENV CMAKE_URL https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmake-$CMAKE_VERSION.tar.gz
 
 RUN set -ex; \
     yum update -y; \
     yum install -y make gcc gcc-c++ libstdc++ curl-devel openssl-devel; \
     yum clean all; \
+    rm -rf /var/cache/yum; \
     \
     _fetch() { \
         local fetch="$1"; shift; \
@@ -33,19 +34,21 @@ RUN set -ex; \
 
 FROM centos:centos7 AS gcc-build
 ENV GCC_MAJOR_VERSION 7
-ENV GCC_VERSION 7.3.0
+ENV GCC_VERSION 7.5.0
 ENV GCC_MIRROR https://ftpmirror.gnu.org/gcc
 
 RUN set -ex; \
   yum update -y; \
-  yum install -y python bzip2 make gcc gcc-c++ gcc-multilib libstdc++ libstdc++-devel \
-    libstdc++.i686 libstdc++-devel.i686 glibc glibc-devel glic.i686 glibc-devel.i686; \
+  yum install -y bzip2 make gcc gcc-c++ libstdc++ libstdc++-devel \
+    libstdc++.i686 libstdc++-devel.i686 glibc glibc-devel glibc.i686 glibc-devel.i686 \
+    wget curl; \
   yum clean all; \
+  rm -rf /var/cache/yum; \
   \
   _fetch() { \
     local fetch="$1"; shift; \
     local file="$1"; shift; \
-    if curl -fL "$GCC_MIRROR/$fetch" -o "$file"; then \
+    if curl -s -fL "$GCC_MIRROR/$fetch" -o "$file"; then \
       return 0; \
     fi; \
     echo >&2 "error: failed to download '$fetch' from mirror"; \
@@ -85,15 +88,22 @@ RUN set -ex; \
 FROM centos:centos7
 
 ENV GCC_MAJOR_VERSION 7
-ENV GCC_VERSION 7.3.0
+ENV GCC_VERSION 7.5.0
 
-COPY --from=cmake-build /usr/local/bin/cmake /usr/local/bin/cmake
-COPY --from=cmake-build /usr/local/bin/cpack /usr/local/bin/cpack
-COPY --from=cmake-build /usr/local/bin/ctest /usr/local/bin/ctest
-COPY --from=cmake-build /usr/local/share/cmake-3.13 /usr/local/share/cmake-3.13
+COPY --from=cmake-build [ \
+  "/usr/local/bin/cmake", \
+  "/usr/local/bin/cpack", \
+  "/usr/local/bin/ctest", \
+  "/usr/local/bin/"]
+COPY --from=cmake-build [ \
+  "/usr/local/share/cmake-3.17", \
+  "/usr/local/share/cmake-3.17/"]
 
-COPY --from=gcc-build /usr/local/bin/gcc /usr/local/bin/gcc
-COPY --from=gcc-build /usr/local/bin/g++ /usr/local/bin/g++
+COPY --from=gcc-build [ \
+  "/usr/local/bin/gcc", \
+  "/usr/local/bin/g++", \
+  "/usr/local/bin/"]
+
 COPY --from=gcc-build /usr/local/lib /usr/local/lib
 COPY --from=gcc-build /usr/local/lib64 /usr/local/lib64
 COPY --from=gcc-build /usr/local/include /usr/local/include
@@ -102,13 +112,15 @@ COPY --from=gcc-build /usr/local/share/gcc-${GCC_VERSION} /usr/local/share
 
 RUN set -ex; \
     yum update -y; \
-    yum install -y python make glibc-devel glibc-devel.i686 \
-        perl; \
+    yum install -y make glibc-devel glibc-devel.i686 \
+        perl python3 curl-devel git; \
     yum clean all; \
+    rm -rf /var/cache/yum; \
     \
     echo '/usr/local/lib64' > /etc/ld.so.conf.d/local-lib64.conf; \
     echo '/usr/local/lib' > /etc/ld.so.conf.d/local-lib.conf; \
     ldconfig -v; \
     \
+    ln -s /usr/bin/python3 /usr/local/bin/python; \
     ln -s /usr/local/bin/gcc "/usr/bin/gcc${GCC_MAJOR_VERSION}"; \
     ln -s /usr/local/bin/g++ "/usr/bin/g++${GCC_MAJOR_VERSION}";
