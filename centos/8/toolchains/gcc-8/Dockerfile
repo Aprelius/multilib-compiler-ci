@@ -105,10 +105,13 @@ COPY --from=gcc-build /usr/local/share/gcc-${GCC_VERSION} /usr/local/share
 
 RUN set -ex; \
     dnf update -y; \
-    dnf install -y git python3 make glibc-devel glibc-devel.i686 \
+    dnf install -y git python3 python3-pip make glibc-devel glibc-devel.i686 \
         perl curl-devel; \
     dnf clean all; \
     rm -rf /var/cache/dnf; \
+    \
+    python -m pip install urllib3 requests; \
+    rm -rf /root/.cache/pip; \
     \
     echo '/usr/local/lib64' > /etc/ld.so.conf.d/local-lib64.conf; \
     echo '/usr/local/lib' > /etc/ld.so.conf.d/local-lib.conf; \
