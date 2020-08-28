@@ -4,10 +4,7 @@ ENV CMAKE_VERSION 3.17.2
 ENV CMAKE_URL https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmake-$CMAKE_VERSION.tar.gz
 
 RUN set -ex; \
-    dnf update -y; \
     dnf install -y make gcc gcc-c++ libstdc++ curl-devel openssl-devel; \
-    dnf clean all; \
-    rm -rf /var/cache/dnf; \
     \
     _fetch() { \
         local fetch="$1"; shift; \
@@ -38,12 +35,9 @@ ENV GCC_VERSION 7.5.0
 ENV GCC_MIRROR https://ftpmirror.gnu.org/gcc
 
 RUN set -ex; \
-  dnf update -y; \
   dnf install -y bzip2 make gcc gcc-c++ libstdc++ libstdc++-devel \
     libstdc++.i686 libstdc++-devel.i686 glibc glibc-devel glibc.i686 glibc-devel.i686 \
     wget curl; \
-  dnf clean all; \
-  rm -rf /var/cache/dnf; \
   \
   _fetch() { \
     local fetch="$1"; shift; \
