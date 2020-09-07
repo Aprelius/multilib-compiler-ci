@@ -1,16 +1,19 @@
 pipeline {
-    agent { label 'linux && docker' }
+    agent {
+        dockerfile {
+            dir 'deploy'
+            filename 'Builder.Dockerfile'
+            label 'linux && docker'
+            additionalBuildArgs '--network host'
+            args '-v /tmp:/tmp'
+        }
+    }
 
     parameters {
         choice(
-            name: 'OS_NAME',
-            choices: ['centos'],
-            description: 'Operation system to build from'
-        )
-        choice(
-            name: 'OS_VERSION',
-            choices: ['7', '8'],
-            description: 'Operating system version to source from'
+            name: 'CMAKE_VERSION',
+            choices: ['3.17.2', '3.17.4', '3.18.2'],
+            description: 'Version of CMake to build for the toolchain'
         )
         choice(
             name: 'TOOLCHAIN',
@@ -27,16 +30,37 @@ pipeline {
                 }
             }
         }
-        stage('Build Container') {
+        stage('Build CMake') {
             steps {
                 script {
-                    sh """
-                        docker build --network=host -f \
-                            ${params.OS_NAME}/${params.OS_VERSION}/toolchains/${params.TOOLCHAIN}/Dockerfile \
-                            .
-                    """
+                    sh "/bin/true"
                 }
             }
+        }
+        stage('Build Toolchain') {
+            steps {
+                script {
+                    sh "/bin/true"
+                }
+            }
+        }
+        stage('Publish Toolchain') {
+            steps {
+                script {
+                    sh "/bin/true"
+                }
+            }
+        }
+    }
+    post {
+        always {
+            echo 'Cleanup docker tags'
+        }
+        success {
+            echo 'Publish pipeline'
+        }
+        failure {
+            echo 'Failed'
         }
     }
 }
