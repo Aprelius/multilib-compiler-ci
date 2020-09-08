@@ -26,6 +26,10 @@ pipeline {
             choices: ['7.5.0', '8.4.0', '9.3.0'],
             description: 'GCC Version to build'
         )
+        string(
+            name: 'DOCKER_REGISTRY',
+            defaultValue: '',
+            description: 'Docker registry for publishing completed toolchains')
     }
 
     stages {
@@ -101,8 +105,28 @@ pipeline {
         stage('Publish Toolchain') {
             steps {
                 script {
-                    sh "/bin/true"
+                    gitCommit = sh(
+                            returnStdout: true,
+                            script: 'git rev-parse HEAD'
+                        ).trim()
+                    gitCommitShort = gitCommit.substring(0, 10)
                 }
+
+                sh """
+                    docker build \
+                        --network host \
+                        -t ${params.DOCKER_REGISTRY}/toolchains/${params.TOOLCHAIN}-${params.GCC_VERSION}:${gitCommitShort}
+                        -f toolchains/${params.TOOLCHAIN}/Dockerfile \
+                        .
+                """
+                sh """
+                    docker push \
+                        ${params.DOCKER_REGISTRY}/toolchains/${params.TOOLCHAIN}-${params.GCC_VERSION}:${gitCommitShort}
+                """
+                sh """
+                    docker image rm \
+                        ${params.DOCKER_REGISTRY}/toolchains/${params.TOOLCHAIN}-${params.GCC_VERSION}:${gitCommitShort}
+                """
             }
         }
     }
