@@ -1,11 +1,12 @@
 pipeline {
     agent {
         dockerfile {
+            customWorkspace "workspace/${env.JOB_NAME}/${env.BUILD_NUMBER}"
             dir 'deploy'
             filename 'Builder.Dockerfile'
             label 'linux && docker'
             additionalBuildArgs '--network host'
-            args '-v /tmp:/tmp'
+            args '--network host'
         }
     }
 
@@ -33,7 +34,26 @@ pipeline {
         stage('Build CMake') {
             steps {
                 script {
-                    sh "/bin/true"
+                    sh """
+                        curl -fL \
+                            https://github.com/Kitware/CMake/releases/download/v${params.CMAKE_VERSION}/cmake-${params.CMAKE_VERSION}.tar.gz \
+                            -o cmake.tar.gz
+                    """
+                    sh "mkdir -p cmake-build cmake-install"
+                    sh """
+                        tar xzf \
+                            cmake.tar.gz \
+                            -C cmake-build \
+                            --strip-components=1
+                    """
+                    sh """
+                        cd cmake-build && \
+                        ./bootstrap --parallel=4 -- \
+                            -DCMAKE_BUILD_TYPE:STRING=Release \
+                            -DCMAKE_INSTALL_PREFIX=../cmake-install && \
+                        make -j && \
+                        make install
+                    """
                 }
             }
         }
