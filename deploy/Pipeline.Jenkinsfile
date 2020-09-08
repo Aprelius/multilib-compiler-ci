@@ -57,7 +57,7 @@ pipeline {
                         ./bootstrap --parallel=4 -- \
                             -DCMAKE_BUILD_TYPE:STRING=Release \
                             -DCMAKE_INSTALL_PREFIX=../cmake-install && \
-                        make -j; \
+                        make -j4; \
                         make install;
                     """
                 }
@@ -92,7 +92,7 @@ pipeline {
                             --enable-shared \
                             --enable-threads=posix \
                             --enable-__cxa_atexit; \
-                        make -j; \
+                        make -j4; \
                         make install-strip;
                     """
                 }
