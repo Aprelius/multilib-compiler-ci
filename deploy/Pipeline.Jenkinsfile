@@ -18,8 +18,13 @@ pipeline {
         )
         choice(
             name: 'TOOLCHAIN',
-            choices: ['gcc-7', 'gcc-8', 'gcc-9'],
+            choices: ['gcc'],
             description: 'Select the toolchain to build'
+        )
+        choice(
+            name: 'GCC_VERSION',
+            choices: ['7.5.0', '8.4.0', '9.3.0'],
+            description: 'GCC Version to build'
         )
     }
 
@@ -47,12 +52,13 @@ pipeline {
                             --strip-components=1
                     """
                     sh """
-                        cd cmake-build && \
+                        set -ex; \
+                        cd cmake-build; \
                         ./bootstrap --parallel=4 -- \
                             -DCMAKE_BUILD_TYPE:STRING=Release \
                             -DCMAKE_INSTALL_PREFIX=../cmake-install && \
-                        make -j && \
-                        make install
+                        make -j; \
+                        make install;
                     """
                 }
             }
@@ -60,7 +66,35 @@ pipeline {
         stage('Build Toolchain') {
             steps {
                 script {
-                    sh "/bin/true"
+                    sh """
+                        curl -fL \
+                            https://ftpmirror.gnu.org/gcc/gcc-${params.GCC_VERSION}/gcc-${params.GCC_VERSION}.tar.xz \
+                            -o gcc.tar.xz
+                    """
+                    sh "mkdir -p gcc-build/build gcc-install"
+                    sh """
+                        tar xf \
+                            gcc.tar.xz \
+                            -C gcc-build \
+                            --strip-components=1
+                    """
+                    sh """
+                        set -ex; \
+                        cd gcc-build; \
+                        ./contrib/download_prerequisites; \
+                        { rm *.tar.* || true; }; \
+                        cd build; \
+                        ../configure \
+                            --prefix=${WORKSPACE}/gcc-install \
+                            --disable-multilib \
+                            --enable-languages=c,c++ \
+                            --enable-clocale=gnu \
+                            --enable-shared \
+                            --enable-threads=posix \
+                            --enable-__cxa_atexit; \
+                        make -j; \
+                        make install-strip;
+                    """
                 }
             }
         }
@@ -75,12 +109,8 @@ pipeline {
     post {
         always {
             echo 'Cleanup docker tags'
-        }
-        success {
-            echo 'Publish pipeline'
-        }
-        failure {
-            echo 'Failed'
+            echo 'Cleanup build folders'
+            sh 'rm -rf gcc-build cmake-build'
         }
     }
 }
