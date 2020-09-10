@@ -103,6 +103,7 @@ pipeline {
             }
         }
         stage('Publish Toolchain') {
+            agent none
             steps {
                 script {
                     gitCommit = sh(
